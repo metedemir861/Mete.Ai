@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gemini AI Asistanı</title>
+    <style>
+        /* Önceki cevaptaki güzel CSS stillerinin aynısı */
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+        body { font-family: 'Roboto', sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; background-color: #eef2f7; }
+        .container { width: 90%; max-width: 600px; padding: 25px; background-color: white; border-radius: 12px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08); text-align: center; }
+        h1 { color: #1a73e8; }
+        textarea { width: 100%; height: 120px; padding: 12px; font-size: 16px; border-radius: 8px; border: 1px solid #dcdcdc; box-sizing: border-box; resize: vertical; }
+        button { width: 100%; background: linear-gradient(90deg, #4285F4, #34A853); color: white; padding: 15px; font-size: 18px; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; transition: transform 0.2s; margin-top: 20px; }
+        button:disabled { background: #bdc3c7; cursor: not-allowed; }
+        .status-container { margin-top: 20px; display: flex; justify-content: center; align-items: center; gap: 10px; height: 30px; }
+        .loader { border: 4px solid #f3f3f3; border-top: 4px solid #4285F4; border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; display: none; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .result-box { margin-top: 20px; padding: 20px; background-color: #f8f9fa; border-radius: 8px; text-align: left; white-space: pre-wrap; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Gemini AI Asistanı</h1>
+        <p>Matematik, kodlama, güncel olaylar... İstediğini sor!</p>
+        <textarea id="girdi" placeholder="Örnek: 2023'te Türkiye'de hangi önemli olaylar yaşandı?"></textarea>
+        <button id="calistirButonu" onclick="calistir()">Soruyu Gönder</button>
+        <div class="status-container">
+            <div class="loader" id="loader"></div>
+            <span id="durum">Asistan hazır, sorunuzu bekliyor.</span>
+        </div>
+        <div class="result-box" id="sonuc">Cevap burada görünecek.</div>
+    </div>
+
+    <script>
+        const durumAlani = document.getElementById('durum');
+        const sonucAlani = document.getElementById('sonuc');
+        const girdiAlani = document.getElementById('girdi');
+        const buton = document.getElementById('calistirButonu');
+        const loader = document.getElementById('loader');
+
+        async function calistir() {
+            const soru = girdiAlani.value;
+            if (!soru) {
+                sonucAlani.textContent = "Lütfen bir soru girin.";
+                return;
+            }
+            buton.disabled = true;
+            loader.style.display = 'block';
+            durumAlani.textContent = 'Gemini düşünüyor...';
+            sonucAlani.textContent = "";
+
+            try {
+                // Burası Backend'e (app.py) istek atacak
+                const response = await fetch('/soru-sor', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ soru: soru })
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    sonucAlani.textContent = data.cevap;
+                } else {
+                    throw new Error(data.hata);
+                }
+            } catch (error) {
+                sonucAlani.textContent = "Bir hata oluştu: " + error.message;
+            } finally {
+                loader.style.display = 'none';
+                durumAlani.textContent = 'İşlem tamamlandı.';
+                buton.disabled = false;
+            }
+        }
+        girdiAlani.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); calistir(); }
+        });
+    </script>
+</body>
+</html>
